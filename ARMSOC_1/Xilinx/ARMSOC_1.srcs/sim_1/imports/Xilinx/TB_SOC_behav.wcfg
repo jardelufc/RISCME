@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="testbench_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="glbl" />
+            <top_module name="testbench" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="68170000fs"></ZoomStartTime>
+      <ZoomEndTime time="132070001fs"></ZoomEndTime>
+      <Cursor1Time time="104970000fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="175"></NameColumnWidth>
+      <ValueColumnWidth column_width="144"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="6" />
+   <wvobject fp_name="/testbench/dut/pins" type="array">
+      <obj_property name="ElementShortName">pins[7:0]</obj_property>
+      <obj_property name="ObjectShortName">pins[7:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench/dut/Instr" type="array">
+      <obj_property name="ElementShortName">Instr[31:0]</obj_property>
+      <obj_property name="ObjectShortName">Instr[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench/dut/dmem/gpio/gpio" type="array">
+      <obj_property name="ElementShortName">gpio[1:0][31:0]</obj_property>
+      <obj_property name="ObjectShortName">gpio[1:0][31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench/dut/dmem/gpio/HSEL" type="logic">
+      <obj_property name="ElementShortName">HSEL</obj_property>
+      <obj_property name="ObjectShortName">HSEL</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench/dut/dmem/gpio/HWRITE" type="logic">
+      <obj_property name="ElementShortName">HWRITE</obj_property>
+      <obj_property name="ObjectShortName">HWRITE</obj_property>
+   </wvobject>
+   <wvobject fp_name="/testbench/dut/dmem/gpio/HADDR" type="logic">
+      <obj_property name="ElementShortName">HADDR</obj_property>
+      <obj_property name="ObjectShortName">HADDR</obj_property>
+   </wvobject>
+</wave_config>
