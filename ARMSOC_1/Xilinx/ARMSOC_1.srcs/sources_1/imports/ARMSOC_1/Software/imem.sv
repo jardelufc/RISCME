@@ -1,10 +1,11 @@
-module imem(input  logic [31:0] a, output logic [31:0] rd);
-  reg [31:0] ROM[255:0];
+module imem(input  logic [31:0] a, output logic [15:0] rd);
+  reg [15:0] ROM[255:0];
   initial begin
-ROM[0]='hE04F000F;
-ROM[1]='hE04F700F;
-ROM[2]='hE28770FF;
-ROM[3]='hE28770FF;
+ROM[0]='hE04F;
+ROM[1]='hE04F;
+ROM[2]='hE287;
+ROM[3]='hE287;
+/*
 ROM[4]='hE28770FF;
 ROM[5]='hE28020FF;
 ROM[6]='hE5802804;
@@ -189,7 +190,7 @@ ROM[184]='hE04F400F;
 ROM[185]='hE2445001;
 ROM[186]='hE0555007;
 ROM[187]='h7AFFFFFD;
-ROM[188]='hE289F000;
+ROM[188]='hE289F000;*/
   end
-  assign rd = ROM[a[31:2]];
+  assign rd = ROM[a[15:1]];
 endmodule
