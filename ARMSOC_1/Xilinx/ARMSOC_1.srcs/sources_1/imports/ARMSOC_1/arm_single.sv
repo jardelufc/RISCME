@@ -161,7 +161,7 @@ endmodule
 module controller(input  logic         clk, reset,
 	              input  logic [27:6] Instr,
                   input  logic [3:0]   ALUFlags,
-                  output logic [2:0]   RegSrc,
+                  output logic [3:0]   RegSrc,
                   output logic         RegWrite,
                   output logic [2:0]   ImmSrc,
                   output logic         ALUSrc, 
@@ -186,7 +186,9 @@ module decode(input  logic [1:0] Op,
               output logic [1:0] FlagW,
               output logic       PCS, RegW, MemW,
               output logic       MemtoReg, ALUSrc,
-              output logic [2:0] ImmSrc, RegSrc, ALUControl);
+              output logic [1:0] ALUControl,
+              output logic [2:0] ImmSrc,
+              output logic [3:0] RegSrc);
 
   logic [9:0] controls;
   logic       Branch, ALUOp;
@@ -292,7 +294,7 @@ module condcheck(input  logic [3:0] Cond,
 endmodule
 
 module datapath(input  logic        clk, reset,
-                input  logic [2:0]  RegSrc,
+                input  logic [3:0]  RegSrc,
                 input  logic        RegWrite,
                 input  logic [1:0]  ImmSrc,
                 input  logic        ALUSrc,
@@ -307,7 +309,7 @@ module datapath(input  logic        clk, reset,
 
   logic [31:0] PCNext, PCPlus2, PCPlus4;
   logic [31:0] ExtImm, SrcA, SrcB, Result;
-  logic [3:0]  RA1, RA2, RA3;
+  logic [3:0]  RA1, RA2, RA3, preRA1;
 
   // next PC logic
   mux2 #(32)  pcmux(PCPlus2, Result, PCSrc, PCNext);
@@ -316,7 +318,9 @@ module datapath(input  logic        clk, reset,
   adder #(32) pcadd2(PCPlus2, 32'b10, PCPlus4);
 
   // register file logic
-  mux2 #(4)   ra1mux(Instr[5:3], 4'b1111, RegSrc[0], RA1);
+  mux2 #(4)   ra1premux(Instr[5:3], Instr[6:3], RegSrc[3], preRA1);
+
+  mux2 #(4)   ra1mux(preRA1, 4'b1111, RegSrc[0], RA1);
   mux2 #(4)   ra2mux(Instr[2:0], Instr[8:6], RegSrc[1], RA2);
 
   mux2 #(4)   ra3mux(Instr[2:0], Instr[10:8], RegSrc[2], RA3);
