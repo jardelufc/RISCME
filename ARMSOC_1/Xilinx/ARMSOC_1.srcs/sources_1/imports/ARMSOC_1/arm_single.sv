@@ -115,7 +115,8 @@ module top(input  logic        clk, reset,
            inout  tri   [7:0] pins
 );
 
-  logic [31:0] PC, Instr, ReadData;
+  logic [31:0] PC, ReadData;
+  logic [15:0] Instr;  
   logic hreset,hclk;
   logic [31:0] WriteData, DataAdr;
   logic        MemWrite;  
@@ -131,23 +132,9 @@ module top(input  logic        clk, reset,
 
 endmodule
 
-/*module dmem(input  logic        clk, we,
-            input  logic [31:0] a, wd,
-            output logic [31:0] rd);
-
-  logic [31:0] RAM[63:0];
-
-  assign rd = RAM[a[31:2]]; // word aligned
-
-  always_ff @(posedge clk)
-    if (we) RAM[a[31:2]] <= wd;
-endmodule*/
-
-
-
 module arm(input  logic        clk, reset,
            output logic [31:0] PC,
-           input  logic [31:0] Instr,
+           input  logic [15:0] Instr,
            output logic        MemWrite,
            output logic [31:0] ALUResult, WriteData,
            input  logic [31:0] ReadData);
@@ -155,9 +142,11 @@ module arm(input  logic        clk, reset,
   logic [3:0] ALUFlags;
   logic       RegWrite, 
               ALUSrc, MemtoReg, PCSrc;
-  logic [1:0] RegSrc, ImmSrc, ALUControl;
+  logic [2:0] RegSrc, ALUControl;
+  logic [2:0] ImmSrc;
 
-  controller c(clk, reset, Instr[31:12], ALUFlags, 
+
+  controller c(clk, reset, Instr[15:6], ALUFlags, 
                RegSrc, RegWrite, ImmSrc, 
                ALUSrc, ALUControl,
                MemWrite, MemtoReg, PCSrc);
@@ -170,11 +159,11 @@ module arm(input  logic        clk, reset,
 endmodule
 
 module controller(input  logic         clk, reset,
-	              input  logic [31:12] Instr,
+	              input  logic [27:6] Instr,
                   input  logic [3:0]   ALUFlags,
-                  output logic [1:0]   RegSrc,
+                  output logic [2:0]   RegSrc,
                   output logic         RegWrite,
-                  output logic [1:0]   ImmSrc,
+                  output logic [2:0]   ImmSrc,
                   output logic         ALUSrc, 
                   output logic [1:0]   ALUControl,
                   output logic         MemWrite, MemtoReg,
@@ -186,7 +175,7 @@ module controller(input  logic         clk, reset,
   decode dec(Instr[27:26], Instr[25:20], Instr[15:12],
              FlagW, PCS, RegW, MemW,
              MemtoReg, ALUSrc, ImmSrc, RegSrc, ALUControl);
-  condlogic cl(clk, reset, Instr[31:28], ALUFlags,
+  condlogic cl(clk, reset, Instr[11:8], ALUFlags,
                FlagW, PCS, RegW, MemW,
                PCSrc, RegWrite, MemWrite);
 endmodule
@@ -197,7 +186,7 @@ module decode(input  logic [1:0] Op,
               output logic [1:0] FlagW,
               output logic       PCS, RegW, MemW,
               output logic       MemtoReg, ALUSrc,
-              output logic [1:0] ImmSrc, RegSrc, ALUControl);
+              output logic [2:0] ImmSrc, RegSrc, ALUControl);
 
   logic [9:0] controls;
   logic       Branch, ALUOp;
@@ -303,7 +292,7 @@ module condcheck(input  logic [3:0] Cond,
 endmodule
 
 module datapath(input  logic        clk, reset,
-                input  logic [1:0]  RegSrc,
+                input  logic [2:0]  RegSrc,
                 input  logic        RegWrite,
                 input  logic [1:0]  ImmSrc,
                 input  logic        ALUSrc,
@@ -312,28 +301,32 @@ module datapath(input  logic        clk, reset,
                 input  logic        PCSrc,
                 output logic [3:0]  ALUFlags,
                 output logic [31:0] PC,
-                input  logic [31:0] Instr,
+                input  logic [15:0] Instr,
                 output logic [31:0] ALUResult, WriteData,
                 input  logic [31:0] ReadData);
 
-  logic [31:0] PCNext, PCPlus4, PCPlus8;
+  logic [31:0] PCNext, PCPlus2, PCPlus4;
   logic [31:0] ExtImm, SrcA, SrcB, Result;
-  logic [3:0]  RA1, RA2;
+  logic [3:0]  RA1, RA2, RA3;
 
   // next PC logic
-  mux2 #(32)  pcmux(PCPlus4, Result, PCSrc, PCNext);
+  mux2 #(32)  pcmux(PCPlus2, Result, PCSrc, PCNext);
   flopr #(32) pcreg(clk, reset, PCNext, PC);
-  adder #(32) pcadd1(PC, 32'b100, PCPlus4);
-  adder #(32) pcadd2(PCPlus4, 32'b100, PCPlus8);
+  adder #(32) pcadd1(PC, 32'b10, PCPlus2);
+  adder #(32) pcadd2(PCPlus2, 32'b10, PCPlus4);
 
   // register file logic
-  mux2 #(4)   ra1mux(Instr[19:16], 4'b1111, RegSrc[0], RA1);
-  mux2 #(4)   ra2mux(Instr[3:0], Instr[15:12], RegSrc[1], RA2);
+  mux2 #(4)   ra1mux(Instr[5:3], 4'b1111, RegSrc[0], RA1);
+  mux2 #(4)   ra2mux(Instr[2:0], Instr[8:6], RegSrc[1], RA2);
+
+  mux2 #(4)   ra3mux(Instr[2:0], Instr[10:8], RegSrc[2], RA3);
+
+
   regfile     rf(clk, RegWrite, RA1, RA2,
-                 Instr[15:12], Result, PCPlus8, 
+                 RA3, Result, PCPlus4, 
                  SrcA, WriteData); 
   mux2 #(32)  resmux(ALUResult, ReadData, MemtoReg, Result);
-  extend      ext(Instr[23:0], ImmSrc, ExtImm);
+  extend      ext(Instr[10:0], ImmSrc, ExtImm);
 
   // ALU logic
   mux2 #(32)  srcbmux(WriteData, ExtImm, ALUSrc, SrcB);
@@ -361,19 +354,38 @@ module regfile(input  logic        clk,
   assign rd2 = (ra2 == 4'b1111) ? r15 : rf[ra2];
 endmodule
 
-module extend(input  logic [23:0] Instr,
-              input  logic [1:0]  ImmSrc,
+module extend(input  logic [10:0] Instr,
+              input  logic [2:0]  ImmSrc,
               output logic [31:0] ExtImm);
  
   always_comb
     case(ImmSrc) 
-               // 8-bit unsigned immediate
-      2'b00:   ExtImm = {24'b0, Instr[7:0]};  
-               // 12-bit unsigned immediate 
-      2'b01:   ExtImm = {20'b0, Instr[11:0]}; 
-               // 24-bit two's complement shifted branch 
-      2'b10:   ExtImm = {{6{Instr[23]}}, Instr[23:0], 2'b00}; 
-      default: ExtImm = 32'bx; // undefined
+ 
+               // 8-bit unsigned immediate 
+        3'b000:   ExtImm = {24'b0, Instr[7:0]}; 
+              // // 8-bit unsigned immediate 
+        3'b001:   ExtImm = {23'b0, Instr[7:0],1'b0}; 
+              // // 8-bit unsigned immediateh 
+        3'b010:   ExtImm = {22'b0, Instr[7:0],2'b00}; 
+              // //11-bit unsigned immediateh 
+        3'b011:   ExtImm = {20'b0, Instr[10:0], 1'b0}; 
+              // //5-bit unsigned immediateh 
+        3'b100:   ExtImm = {25'b0, Instr[10:6],2'b00}; 
+              // //3-bit unsigned immediateh 
+        3'b101:   ExtImm = {29'b0, Instr[8:6]}; 
+        default: ExtImm = 32'bx; // undefined
+
+/* 
+               // 3-bit unsigned immediate
+      3'b000:   ExtImm = {29'b0, Instr[8:6]};  
+               // 5-bit unsigned immediate 
+      3'b010:   ExtImm = {27'b0, Instr[10:6]}; 
+               // 8-bit two's complement shifted branch 
+      3'b100:   ExtImm = {24'b0, Instr[7:0]}; 
+               // 11-bit imm branch encoding t2 
+      3'b110:   ExtImm = {{20{Instr[10]}}, Instr[10:0], 2'b00}; 
+*/
+//      default: ExtImm = 32'bx; // undefined
     endcase             
 endmodule
 
@@ -612,5 +624,3 @@ module flop #(parameter WIDTH = 8)
   always_ff @(posedge clk)
     q <= d;
 endmodule
-
-
