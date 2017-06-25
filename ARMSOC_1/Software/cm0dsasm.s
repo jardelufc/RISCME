@@ -48,6 +48,13 @@ Reset_Handler   PROC
                 GLOBAL Reset_Handler
                 ENTRY
 				
+				adds r1,r2
+				add r1,r2
+				sub r1,r2
+				subs r1,r2
+				and r1,r2
+				adds r1,r2
+				add r1,r2				
 				LDR.n		R0, =0x55
 				LDR		R0, =0x12345678				
 				STR.n		R0, [R1]

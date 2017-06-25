@@ -180,7 +180,9 @@ module controller(input  logic         clk, reset,
                PCSrc, RegWrite, MemWrite);
 endmodule
 
-module decode(input  logic [1:0] Op,
+module decode(
+              input  logic [15:6] instr,
+              input  logic [1:0] Op,
               input  logic [5:0] Funct,
               input  logic [3:0] Rd,
               output logic [1:0] FlagW,
@@ -196,7 +198,30 @@ module decode(input  logic [1:0] Op,
   // Main Decoder
   
   always_comb
-  	casex(Op)
+  
+  if(instr[15:9]==7'b0001100 || instr[15:9]==7'b0001101 || instr[15:6]==10'b0100000000 || instr[15:6]==10'b0100001100)
+        controls = 10'b0000001001;
+  else
+//DPimm
+  if(instr[15:9]==7'b0001110 || instr[15:9]==7'b0001111 || instr[15:9]==7'b00110xx || instr[15:11]==5'b00111)
+        controls = 10'b0000101001;
+  else
+  //LDR
+  if(instr[15:9]==7'b0101100 || instr[15:11]==5'b01101)
+        controls = 10'b0001111000;
+  else
+  //STR
+  if(instr[15:11]==5'b01100 || instr[15:9]==7'b0101000)
+        controls = 10'b1001110100;
+  else
+  //B
+  if(instr[15:12]==4'b1101 || instr[15:11]==5'b11100 || instr[15:7]==9'b010001111 || instr[15:7]==9'b010001110)   
+        controls = 10'b0110100010; 
+  else
+        controls = 10'bx;
+  
+     
+  /*	casex(Op)
   	                        // Data processing immediate
   	  2'b00: if (Funct[5])  controls = 10'b0000101001; 
   	                        // Data processing register
@@ -209,7 +234,7 @@ module decode(input  logic [1:0] Op,
   	  2'b10:                controls = 10'b0110100010; 
   	                        // Unimplemented
   	  default:              controls = 10'bx;          
-  	endcase
+  	endcase*/
 
   assign {RegSrc, ImmSrc, ALUSrc, MemtoReg, 
           RegW, MemW, Branch, ALUOp} = controls; 
@@ -271,8 +296,10 @@ module condcheck(input  logic [3:0] Cond,
   
   assign {neg, zero, carry, overflow} = Flags;
   assign ge = (neg == overflow);
-                  
+  assign CondEx = 1'b1;                
+/*
   always_comb
+
     case(Cond)
       4'b0000: CondEx = zero;             // EQ
       4'b0001: CondEx = ~zero;            // NE
@@ -290,7 +317,7 @@ module condcheck(input  logic [3:0] Cond,
       4'b1101: CondEx = ~(~zero & ge);    // LE
       4'b1110: CondEx = 1'b1;             // Always
       default: CondEx = 1'bx;             // undefined
-    endcase
+    endcase*/
 endmodule
 
 module datapath(input  logic        clk, reset,
@@ -369,14 +396,12 @@ module extend(input  logic [10:0] Instr,
         3'b000:   ExtImm = {24'b0, Instr[7:0]}; 
               // // 8-bit unsigned immediate 
         3'b001:   ExtImm = {23'b0, Instr[7:0],1'b0}; 
-              // // 8-bit unsigned immediateh 
-        3'b010:   ExtImm = {22'b0, Instr[7:0],2'b00}; 
               // //11-bit unsigned immediateh 
-        3'b011:   ExtImm = {20'b0, Instr[10:0], 1'b0}; 
+        3'b010:   ExtImm = {20'b0, Instr[10:0], 1'b0}; 
               // //5-bit unsigned immediateh 
-        3'b100:   ExtImm = {25'b0, Instr[10:6],2'b00}; 
+        3'b011:   ExtImm = {25'b0, Instr[10:6],2'b00}; 
               // //3-bit unsigned immediateh 
-        3'b101:   ExtImm = {29'b0, Instr[8:6]}; 
+        3'b100:   ExtImm = {29'b0, Instr[8:6]}; 
         default: ExtImm = 32'bx; // undefined
 
 /* 
