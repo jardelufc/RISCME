@@ -172,7 +172,7 @@ module controller(input  logic         clk, reset,
   logic [1:0] FlagW;
   logic       PCS, RegW, MemW;
   
-  decode dec(Instr[27:26], Instr[25:20], Instr[15:12],
+  decode dec(Instr[15:6], Instr[15:12],
              FlagW, PCS, RegW, MemW,
              MemtoReg, ALUSrc, ImmSrc, RegSrc, ALUControl);
   condlogic cl(clk, reset, Instr[11:8], ALUFlags,
@@ -182,45 +182,51 @@ endmodule
 
 module decode(
               input  logic [15:6] instr,
-              input  logic [1:0] Op,
-              input  logic [5:0] Funct,
               input  logic [3:0] Rd,
               output logic [1:0] FlagW,
               output logic       PCS, RegW, MemW,
               output logic       MemtoReg, ALUSrc,
               output logic [1:0] ALUControl,
               output logic [1:0] ImmSrc,
-              output logic [3:0] RegSrc);
+              output logic [3:0] RegSrc,
+              output logic  weLR);
 
-  logic [9:0] controls;
+  logic [13:0] controls;
   logic       Branch, ALUOp;
 
   // Main Decoder
   
   always_comb
-  
-  if(instr[15:9]==7'b0001100 || instr[15:9]==7'b0001101 || instr[15:6]==10'b0100000000 || instr[15:6]==10'b0100001100)
-        controls = 10'b0000001001;
-  else
-//DPimm
-  if(instr[15:9]==7'b0001110 || instr[15:9]==7'b0001111 || instr[15:9]==7'b00110xx || instr[15:11]==5'b00111)
-        controls = 10'b0000101001;
-  else
-  //LDR
-  if(instr[15:9]==7'b0101100 || instr[15:11]==5'b01101) {
-        if (instr[13:12]==2'b01) controls = 10'b0001111000; //reg
-        else if (instr[13:12]==2'b10) controls = 10'b0001111000; //imm
-  }
-  else
+  // Data path register and sub
+  if(instr[15:9]==7'b0001100 || instr[15:9]==7'b0001101) 
+        controls = {17'b0000XX10XX100110,instr[9]};
+  // Data path register add sub
+  else if(instr[15:6]==10'b0100000000 || instr[15:6]==10'b0100001100)
+          controls = {17'b0000XX10XX000101,instr[8]};
+  //DPimm
+  else if(instr[15:11]==5'b00110 || instr[15:11]==5'b00111)
+        controls = {17'b000101110XX10110,instr[11]};
   //STR
-  if(instr[15:11]==5'b01100 || instr[15:9]==7'b0101000)
-        controls = 10'b1001110100;
-  else
+  else if(instr[15:11]==5'b01100)
+        controls = 17'b0X110000XX0X00000; //reg      
+  //LDR
+  else if(instr[15:11]==5'b01101)
+        controls = 17'b01010010XXX000000; //reg      
   //B
-  if(instr[15:12]==4'b1101 || instr[15:11]==5'b11100 || instr[15:7]==9'b010001111 || instr[15:7]==9'b010001110)   
-        controls = 10'b0110100010; 
+  else if(instr[15:12]==4'b1101) // ||  || instr[15:7]==9'b010001111 || )   
+        controls = 17'b1001110110XX00000;
+  // B cond 
+  else if (instr[15:11]==5'b11100)
+        controls = 17'b1001100110XX00000;
+  // BX
+  else if (instr[15:7]==9'b010001110)
+        controls = 17'b1000XX01110X00000;
+  // BLX        
+  else if (instr[15:7]==9'b010001111)
+              controls = 17'b1000XX01110X10000;        
+  // Default
   else
-        controls = 10'bx;
+      controls = 14'bx;
   
      
   /*	casex(Op)
@@ -238,10 +244,10 @@ module decode(
   	  default:              controls = 10'bx;          
   	endcase*/
 
-  assign {RegSrc, ImmSrc, ALUSrc, MemtoReg, 
-          RegW, MemW, Branch, ALUOp} = controls; 
+  assign {Branch,MemtoReg,MemW, ALUSrc, ImmSrc,RegW, RegSrc,ALUOp,weLR,FlagW,ALUControl} = controls; 
           
-  // ALU Decoder             
+  // ALU Decoder  
+  /*           
   always_comb
     if (ALUOp) begin                 // which DP Instr?
       case(Funct[4:1]) 
@@ -257,13 +263,15 @@ module decode(
 	// FlagW[0] = S-bit & (ADD | SUB)
       FlagW[0]      = Funct[0] & 
         (ALUControl == 2'b00 | ALUControl == 2'b01); 
-    end else begin
+    end 
+    
+    else begin
       ALUControl = 2'b00; // add for non-DP instructions
       FlagW      = 2'b00; // don't update Flags
     end
-              
+          */    
   // PC Logic
-  assign PCS  = ((Rd == 4'b1111) & RegW) | Branch; 
+  assign PCS  = Branch; 
 endmodule
 
 module condlogic(input  logic       clk, reset,
@@ -375,8 +383,7 @@ module regfile(input  logic        clk,
                input  logic [3:0]  ra1, ra2, wa3, 
                input  logic [31:0] wd3, r15,
                output logic [31:0] rd1, rd2,
-               input  logic [31:0] LR,
-               input  logic        weLR, 
+               input  logic        weLR
 
                );
 
@@ -391,7 +398,7 @@ module regfile(input  logic        clk,
     if (we3) rf[wa3] <= wd3;	
 
   always_ff @(posedge clk)
-    if (weLR) rf[w14] <= LR;
+    if (weLR) rf[14] <= r15;
 
   assign rd1 = (ra1 == 4'b1111) ? r15 : rf[ra1];
   assign rd2 = (ra2 == 4'b1111) ? r15 : rf[ra2];
