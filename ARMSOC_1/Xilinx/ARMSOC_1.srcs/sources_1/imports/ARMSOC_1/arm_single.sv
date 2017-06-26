@@ -140,41 +140,43 @@ module arm(input  logic        clk, reset,
            input  logic [31:0] ReadData);
 
   logic [3:0] ALUFlags;
+  logic [4:0] RegSrc;  
   logic       RegWrite, 
-              ALUSrc, MemtoReg, PCSrc;
-  logic [2:0] RegSrc, ALUControl;
+              ALUSrc, MemtoReg, PCSrc,weLR;
+  logic [2:0] ALUControl;
   logic [1:0] ImmSrc;
 
 
   controller c(clk, reset, Instr[15:6], ALUFlags, 
                RegSrc, RegWrite, ImmSrc, 
                ALUSrc, ALUControl,
-               MemWrite, MemtoReg, PCSrc);
+               MemWrite, MemtoReg, PCSrc,weLR);
   datapath dp(clk, reset, 
               RegSrc, RegWrite, ImmSrc,
               ALUSrc, ALUControl,
               MemtoReg, PCSrc,
               ALUFlags, PC, Instr,
-              ALUResult, WriteData, ReadData);
+              ALUResult, WriteData, ReadData, weLR);
 endmodule
 
 module controller(input  logic         clk, reset,
-	              input  logic [27:6] Instr,
+	              input  logic [15:6] Instr,
                   input  logic [3:0]   ALUFlags,
-                  output logic [3:0]   RegSrc,
+                  output logic [4:0]   RegSrc,
                   output logic         RegWrite,
                   output logic [1:0]   ImmSrc,
                   output logic         ALUSrc, 
                   output logic [1:0]   ALUControl,
                   output logic         MemWrite, MemtoReg,
-                  output logic         PCSrc);
+                  output logic         PCSrc,
+                  output logic         weLR);
 
   logic [1:0] FlagW;
   logic       PCS, RegW, MemW;
   
-  decode dec(Instr[15:6], Instr[15:12],
+  decode dec(Instr[15:6],
              FlagW, PCS, RegW, MemW,
-             MemtoReg, ALUSrc, ImmSrc, RegSrc, ALUControl);
+             MemtoReg, ALUSrc, ImmSrc, RegSrc, ALUControl,weLR);
   condlogic cl(clk, reset, Instr[11:8], ALUFlags,
                FlagW, PCS, RegW, MemW,
                PCSrc, RegWrite, MemWrite);
@@ -182,30 +184,30 @@ endmodule
 
 module decode(
               input  logic [15:6] instr,
-              input  logic [3:0] Rd,
               output logic [1:0] FlagW,
               output logic       PCS, RegW, MemW,
               output logic       MemtoReg, ALUSrc,
-              output logic [1:0] ALUControl,
               output logic [1:0] ImmSrc,
-              output logic [3:0] RegSrc,
+              output logic [4:0] RegSrc,
+              
+              output logic [1:0] ALUControl,
               output logic  weLR);
 
-  logic [13:0] controls;
+  logic [16:0] controls;
   logic       Branch, ALUOp;
 
   // Main Decoder
   
   always_comb
-  // Data path register and sub
-  if(instr[15:9]==7'b0001100 || instr[15:9]==7'b0001101) 
-        controls = {17'b0000XX10XX100110,instr[9]};
   // Data path register add sub
+  if(instr[15:9]==7'b0001100 || instr[15:9]==7'b0001101) 
+        controls = {16'b0000XX10XX100110,instr[9]};
+  // Data path register and or
   else if(instr[15:6]==10'b0100000000 || instr[15:6]==10'b0100001100)
-          controls = {17'b0000XX10XX000101,instr[8]};
+          controls = {16'b0000XX10XX000101,instr[9]};
   //DPimm
   else if(instr[15:11]==5'b00110 || instr[15:11]==5'b00111)
-        controls = {17'b000101110XX10110,instr[11]};
+        controls = {16'b000101110XX10110,instr[11]};
   //STR
   else if(instr[15:11]==5'b01100)
         controls = 17'b0X110000XX0X00000; //reg      
@@ -214,7 +216,7 @@ module decode(
         controls = 17'b01010010XXX000000; //reg      
   //B
   else if(instr[15:12]==4'b1101) // ||  || instr[15:7]==9'b010001111 || )   
-        controls = 17'b1001110110XX00000;
+        controls = 17'b1001100110XX00000;
   // B cond 
   else if (instr[15:11]==5'b11100)
         controls = 17'b1001100110XX00000;
@@ -226,7 +228,7 @@ module decode(
               controls = 17'b1000XX01110X10000;        
   // Default
   else
-      controls = 14'bx;
+      controls = 17'bx;
   
      
   /*	casex(Op)
@@ -244,7 +246,7 @@ module decode(
   	  default:              controls = 10'bx;          
   	endcase*/
 
-  assign {Branch,MemtoReg,MemW, ALUSrc, ImmSrc,RegW, RegSrc,ALUOp,weLR,FlagW,ALUControl} = controls; 
+  assign {PCS,MemtoReg,MemW, ALUSrc, ImmSrc,RegW, RegSrc,weLR,FlagW,ALUControl} = controls[16:0]; 
           
   // ALU Decoder  
   /*           
@@ -271,7 +273,7 @@ module decode(
     end
           */    
   // PC Logic
-  assign PCS  = Branch; 
+  //assign PCS  = Branch; 
 endmodule
 
 module condlogic(input  logic       clk, reset,
@@ -331,7 +333,7 @@ module condcheck(input  logic [3:0] Cond,
 endmodule
 
 module datapath(input  logic        clk, reset,
-                input  logic [3:0]  RegSrc,
+                input  logic [4:0]  RegSrc,
                 input  logic        RegWrite,
                 input  logic [1:0]  ImmSrc,
                 input  logic        ALUSrc,
@@ -342,11 +344,12 @@ module datapath(input  logic        clk, reset,
                 output logic [31:0] PC,
                 input  logic [15:0] Instr,
                 output logic [31:0] ALUResult, WriteData,
-                input  logic [31:0] ReadData);
+                input  logic [31:0] ReadData,
+                input  logic  weLR);
 
   logic [31:0] PCNext, PCPlus2, PCPlus4;
   logic [31:0] ExtImm, SrcA, SrcB, Result;
-  logic [3:0]  RA1, RA2, RA3, preRA1;
+  logic [3:0]  RA1, RA2, RA3, preRA1,prepreRA1;
 
   // next PC logic
   mux2 #(32)  pcmux(PCPlus2, Result, PCSrc, PCNext);
@@ -355,27 +358,25 @@ module datapath(input  logic        clk, reset,
   adder #(32) pcadd2(PCPlus2, 32'b10, PCPlus4);
 
   // register file logic
-  mux2 #(4)   ra1premux(Instr[5:3], Instr[6:3], RegSrc[0], preRA1);
+  mux2 #(4)   ra1prepremux(4'hFFFF, Instr[6:3], RegSrc[2], prepreRA1);
+  mux2 #(4)   ra1premux   (Instr[10:8], prepreRA1, RegSrc[3], preRA1);
+  mux2 #(4)   ra1mux      (Instr[5:3], preRA1, RegSrc[4], RA1);
+  
+  mux2 #(4)   ra2mux(Instr[2:0], Instr[8:6], RegSrc[1], RA2);
 
-  mux2 #(4)   ra1mux(preRA1, 4'b1111, RegSrc[1], RA1);
-  mux2 #(4)   ra2mux(Instr[2:0], Instr[8:6], RegSrc[2], RA2);
-
-  mux2 #(4)   ra3mux(Instr[2:0], Instr[10:8], RegSrc[3], RA3);
+  mux2 #(4)   ra3mux(Instr[2:0], Instr[10:8], RegSrc[0], RA3);
 
 // LDR regsrc [3:0] 0100
 // LDR immsrc 011
 // LDR alusrc 
 
-  regfile     rf(clk, RegWrite, RA1, RA2,
-                 RA3, Result, PCPlus4, 
-                 SrcA, WriteData); 
+  regfile     rf(clk, RegWrite, RA1, RA2,RA3, Result, PCPlus4,SrcA, WriteData,weLR); 
   mux2 #(32)  resmux(ALUResult, ReadData, MemtoReg, Result);
   extend      ext(Instr[10:0], ImmSrc, ExtImm);
 
   // ALU logic
   mux2 #(32)  srcbmux(WriteData, ExtImm, ALUSrc, SrcB);
-  alu         alu(SrcA, SrcB, ALUControl, 
-                  ALUResult, ALUFlags);
+  alu         alu(SrcA, SrcB, ALUControl, ALUResult, ALUFlags);
 endmodule
 
 module regfile(input  logic        clk, 
@@ -576,8 +577,9 @@ module ahb_rom(input  logic        HCLK,
                output logic [31:0] HRDATA);
 
   logic [31:0] rom[255:0]; // 64KB ROM organized as 16K x 32 bits 
-  
-  //initial
+  initial begin
+  rom[0]=32'h800;
+  end
   //    $readmemh("rom_contents.dat",rom);
   
   assign HRDATA = rom[HADDR];

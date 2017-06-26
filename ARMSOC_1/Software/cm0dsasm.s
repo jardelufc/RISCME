@@ -6,86 +6,77 @@
         				AREA	RESET, DATA, READONLY	  			; First 32 WORDS is VECTOR TABLE
         				EXPORT 	__Vectors
 					
-__Vectors		    	DCD		0x000003FC							; 1K Internal Memory
-        				DCD		Reset_Handler
-        				DCD		0  			
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD 	0
-        				DCD		0
-        				DCD		0
-        				DCD 	0
-        				DCD		0
+__Vectors		    	;DCD		0x000003FC							; 1K Internal Memory
+        				;DCD		Reset_Handler
+        				;DCD		0  			
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD 	0
+        				;DCD		0
+        				;DCD		0
+        				;DCD 	0
+        				;DCD		0
         				
         				; External Interrupts
 						        				
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-        				DCD		0
-              
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
+        				;DCD		0
                 AREA |.text|, CODE, READONLY
 ;Reset Handler
 Reset_Handler   PROC
                 GLOBAL Reset_Handler
                 ENTRY
 				
-				adds r1,r2
-				add r1,r2
-				sub r1,r2
-				subs r1,r2
-				and r1,r2
-				adds r1,r2
-				add r1,r2				
-				LDR.n		R0, =0x55
-				LDR		R0, =0x12345678				
-				STR.n		R0, [R1]
-				SUBS.n	    R0,R0,#1
-				adds.n	    R0,R0,#1
-				ands.n	    R0,R0,r1
-				orrs.n	    R0,R0,r1
-				;BNE 0x12345678
 
+main				
+				subs r0,r7,r7
+				subs r1,r7,r7
+				ldr r1,[r0,#0]
+				adds r0,0xFF
+				str r0,[r1,#0]
+				str r0,[r1,#0]
+				b main
+				;bx lr
+				;blx r0
+				endp				
+
+		END                         
+
+				;ADDS <Rd>,<Rn>,<Rm>
+				;SUBS <Rd>,<Rn>,<Rm>
 				
-    
-AGAIN		   	LDR 	R1, =0x50000000
-				LDR		R0, =0x55
-				STR		R0, [R1]
+				;ANDS <Rdn>,<Rm>
+				;ORRS <Rdn>,<Rm>
 
-				LDR		R0, =0x2FFFFF
-Loop			SUBS	R0,R0,#1
-				BNE Loop
+				;ADDS <Rdn>,#<imm8>
+				;SUBS <Rdn>,#<imm8>
 
-				LDR 	R1, =0x50000000
-				LDR		R0, =0xAA
-				STR		R0, [R1]
+				;LDR <Rt>, [<Rn>{,<imm5>}]
+				
+				;STR <Rt>, [<Rn>{,<imm5>}]
 
-				LDR		R0, =0x2FFFFF
-Loop1			SUBS	R0,R0,#1
-				BNE Loop1
-
-				B AGAIN
-				ENDP
-
-
-
-		END                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+				;B<c> <label>
+				;B      <label>
+				;BLX <Rm>
+				;BX <Rm>
    
