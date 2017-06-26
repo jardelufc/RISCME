@@ -143,7 +143,7 @@ module arm(input  logic        clk, reset,
   logic       RegWrite, 
               ALUSrc, MemtoReg, PCSrc;
   logic [2:0] RegSrc, ALUControl;
-  logic [2:0] ImmSrc;
+  logic [1:0] ImmSrc;
 
 
   controller c(clk, reset, Instr[15:6], ALUFlags, 
@@ -163,7 +163,7 @@ module controller(input  logic         clk, reset,
                   input  logic [3:0]   ALUFlags,
                   output logic [3:0]   RegSrc,
                   output logic         RegWrite,
-                  output logic [2:0]   ImmSrc,
+                  output logic [1:0]   ImmSrc,
                   output logic         ALUSrc, 
                   output logic [1:0]   ALUControl,
                   output logic         MemWrite, MemtoReg,
@@ -189,7 +189,7 @@ module decode(
               output logic       PCS, RegW, MemW,
               output logic       MemtoReg, ALUSrc,
               output logic [1:0] ALUControl,
-              output logic [2:0] ImmSrc,
+              output logic [1:0] ImmSrc,
               output logic [3:0] RegSrc);
 
   logic [9:0] controls;
@@ -207,8 +207,10 @@ module decode(
         controls = 10'b0000101001;
   else
   //LDR
-  if(instr[15:9]==7'b0101100 || instr[15:11]==5'b01101)
-        controls = 10'b0001111000;
+  if(instr[15:9]==7'b0101100 || instr[15:11]==5'b01101) {
+        if (instr[13:12]==2'b01) controls = 10'b0001111000; //reg
+        else if (instr[13:12]==2'b10) controls = 10'b0001111000; //imm
+  }
   else
   //STR
   if(instr[15:11]==5'b01100 || instr[15:9]==7'b0101000)
@@ -345,13 +347,16 @@ module datapath(input  logic        clk, reset,
   adder #(32) pcadd2(PCPlus2, 32'b10, PCPlus4);
 
   // register file logic
-  mux2 #(4)   ra1premux(Instr[5:3], Instr[6:3], RegSrc[3], preRA1);
+  mux2 #(4)   ra1premux(Instr[5:3], Instr[6:3], RegSrc[0], preRA1);
 
-  mux2 #(4)   ra1mux(preRA1, 4'b1111, RegSrc[0], RA1);
-  mux2 #(4)   ra2mux(Instr[2:0], Instr[8:6], RegSrc[1], RA2);
+  mux2 #(4)   ra1mux(preRA1, 4'b1111, RegSrc[1], RA1);
+  mux2 #(4)   ra2mux(Instr[2:0], Instr[8:6], RegSrc[2], RA2);
 
-  mux2 #(4)   ra3mux(Instr[2:0], Instr[10:8], RegSrc[2], RA3);
+  mux2 #(4)   ra3mux(Instr[2:0], Instr[10:8], RegSrc[3], RA3);
 
+// LDR regsrc [3:0] 0100
+// LDR immsrc 011
+// LDR alusrc 
 
   regfile     rf(clk, RegWrite, RA1, RA2,
                  RA3, Result, PCPlus4, 
@@ -369,7 +374,11 @@ module regfile(input  logic        clk,
                input  logic        we3, 
                input  logic [3:0]  ra1, ra2, wa3, 
                input  logic [31:0] wd3, r15,
-               output logic [31:0] rd1, rd2);
+               output logic [31:0] rd1, rd2,
+               input  logic [31:0] LR,
+               input  logic        weLR, 
+
+               );
 
   logic [31:0] rf[14:0];
 
@@ -381,27 +390,27 @@ module regfile(input  logic        clk,
   always_ff @(posedge clk)
     if (we3) rf[wa3] <= wd3;	
 
+  always_ff @(posedge clk)
+    if (weLR) rf[w14] <= LR;
+
   assign rd1 = (ra1 == 4'b1111) ? r15 : rf[ra1];
   assign rd2 = (ra2 == 4'b1111) ? r15 : rf[ra2];
 endmodule
 
 module extend(input  logic [10:0] Instr,
-              input  logic [2:0]  ImmSrc,
+              input  logic [1:0]  ImmSrc,
               output logic [31:0] ExtImm);
  
   always_comb
     case(ImmSrc) 
- 
-               // 8-bit unsigned immediate 
-        3'b000:   ExtImm = {24'b0, Instr[7:0]}; 
-              // // 8-bit unsigned immediate 
-        3'b001:   ExtImm = {23'b0, Instr[7:0],1'b0}; 
-              // //11-bit unsigned immediateh 
-        3'b010:   ExtImm = {20'b0, Instr[10:0], 1'b0}; 
               // //5-bit unsigned immediateh 
-        3'b011:   ExtImm = {25'b0, Instr[10:6],2'b00}; 
-              // //3-bit unsigned immediateh 
-        3'b100:   ExtImm = {29'b0, Instr[8:6]}; 
+        2'b00:   ExtImm = {25'b0, Instr[10:6],2'b00}; 
+               // 8-bit unsigned immediate 
+        2'b01:   ExtImm = {24'b0, Instr[7:0]}; 
+              // // 8-bit unsigned immediate 
+        2'b10:   ExtImm = {23'b0, Instr[7:0],1'b0}; 
+              // //11-bit unsigned immediateh 
+        2'b11:   ExtImm = {20'b0, Instr[10:0], 1'b0}; 
         default: ExtImm = 32'bx; // undefined
 
 /* 
