@@ -143,7 +143,7 @@ module arm(input  logic        clk, reset,
   logic [4:0] RegSrc;  
   logic       RegWrite, 
               ALUSrc, MemtoReg, PCSrc,weLR;
-  logic [2:0] ALUControl;
+  logic [1:0] ALUControl;
   logic [1:0] ImmSrc;
 
 
@@ -194,7 +194,7 @@ module decode(
               output logic  weLR);
 
   logic [16:0] controls;
-  logic       Branch, ALUOp;
+  
 
   // Main Decoder
   
@@ -214,12 +214,13 @@ module decode(
   //LDR
   else if(instr[15:11]==5'b01101)
         controls = 17'b01010010XXX000000; //reg      
-  //B
+  //B cond
   else if(instr[15:12]==4'b1101) // ||  || instr[15:7]==9'b010001111 || )   
-        controls = 17'b1001100110XX00000;
-  // B cond 
+        controls = 17'b1001100110XX00000; 
+  // B 
   else if (instr[15:11]==5'b11100)
-        controls = 17'b1001100110XX00000;
+         controls = 17'b1001110110XX00000;
+
   // BX
   else if (instr[15:7]==9'b010001110)
         controls = 17'b1000XX01110X00000;
@@ -358,13 +359,13 @@ module datapath(input  logic        clk, reset,
   adder #(32) pcadd2(PCPlus2, 32'b10, PCPlus4);
 
   // register file logic
-  mux2 #(4)   ra1prepremux(4'hFFFF, Instr[6:3], RegSrc[2], prepreRA1);
-  mux2 #(4)   ra1premux   (Instr[10:8], prepreRA1, RegSrc[3], preRA1);
-  mux2 #(4)   ra1mux      (Instr[5:3], preRA1, RegSrc[4], RA1);
+  mux2 #(4)   ra1prepremux(4'hF, Instr[6:3], RegSrc[2], prepreRA1);
+  mux2 #(4)   ra1premux   ({1'b0,Instr[10:8]}, prepreRA1, RegSrc[3], preRA1);
+  mux2 #(4)   ra1mux      ({1'b0,Instr[5:3]}, preRA1, RegSrc[4], RA1);
   
-  mux2 #(4)   ra2mux(Instr[2:0], Instr[8:6], RegSrc[1], RA2);
+  mux2 #(4)   ra2mux({1'b0,Instr[2:0]}, {1'b0,Instr[8:6]}, RegSrc[1], RA2);
 
-  mux2 #(4)   ra3mux(Instr[2:0], Instr[10:8], RegSrc[0], RA3);
+  mux2 #(4)   ra3mux({1'b0,Instr[2:0]}, {1'b0,Instr[10:8]}, RegSrc[0], RA3);
 
 // LDR regsrc [3:0] 0100
 // LDR immsrc 011
@@ -389,7 +390,18 @@ module regfile(input  logic        clk,
                );
 
   logic [31:0] rf[14:0];
+initial begin
+rf[0]=32'h00000000;
+rf[1]=32'h00000000;
+rf[2]=32'h00000000;
+rf[3]=32'h00000000;
+rf[4]=32'h00000000;
+rf[5]=32'h00000000;
+rf[6]=32'h00000000;
+rf[7]=32'h00000000;
 
+
+end 
   // three ported register file
   // read two ports combinationally
   // write third port on rising edge of clock
@@ -416,9 +428,9 @@ module extend(input  logic [10:0] Instr,
                // 8-bit unsigned immediate 
         2'b01:   ExtImm = {24'b0, Instr[7:0]}; 
               // // 8-bit unsigned immediate 
-        2'b10:   ExtImm = {23'b0, Instr[7:0],1'b0}; 
+        2'b10:   ExtImm = {{23{Instr[7]}}, Instr[7:0],1'b0}; 
               // //11-bit unsigned immediateh 
-        2'b11:   ExtImm = {20'b0, Instr[10:0], 1'b0}; 
+        2'b11:   ExtImm = {{20{Instr[10]}}, Instr[10:0], 1'b0}; 
         default: ExtImm = 32'bx; // undefined
 
 /* 

@@ -48,17 +48,25 @@ Reset_Handler   PROC
                 ENTRY
 				
 
-main				
+main								
 				subs r0,r7,r7
 				subs r1,r7,r7
+				adds r0,#0
 				ldr r1,[r0,#0]
-				adds r0,0xFF
+				subs r1,r7,r7
+				adds r0,#0xFF
 				str r0,[r1,#0]
 				str r0,[r1,#0]
-				b main
+				;beq main
 				;bx lr
-				;blx r0
+				subs r0,r7,r7
+				;ldr r1,[r0,teste]
+				;adds r0, teste
+				 blx r0
+teste				
 				endp				
+        		DCD		main
+				DCD		teste
 
 		END                         
 
