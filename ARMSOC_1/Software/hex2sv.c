@@ -27,8 +27,8 @@ void main(int argc, char**argv) {
 		return;
 	}
 
-	fprintf(fout, "module imem(input  logic [31:0] a, output logic [31:0] rd);\n");
-	fprintf(fout, "  reg [31:0] ROM[255:0];\n");
+	fprintf(fout, "module imem(input  logic [31:0] a, output logic [15:0] rd);\n");
+	fprintf(fout, "  reg [15:0] ROM[255:0];\n");
 	fprintf(fout, "  initial begin\n");
 
 
@@ -55,7 +55,7 @@ void main(int argc, char**argv) {
 		i++;
 	}
 	fprintf(fout, "  end\n");
-	fprintf(fout, "  assign rd = ROM[a[31:2]];\n"); // word aligned
+	fprintf(fout, "  assign rd = ROM[a[31:1]];\n"); // word aligned
 	fprintf(fout, "endmodule");
 	fclose(fin);
 	fclose(fout);

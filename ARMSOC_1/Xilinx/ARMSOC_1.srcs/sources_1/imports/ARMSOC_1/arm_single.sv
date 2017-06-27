@@ -411,7 +411,7 @@ end
     if (we3) rf[wa3] <= wd3;	
 
   always_ff @(posedge clk)
-    if (weLR) rf[14] <= r15;
+    if (weLR) rf[14] <= (r15-2);
 
   assign rd1 = (ra1 == 4'b1111) ? r15 : rf[ra1];
   assign rd2 = (ra2 == 4'b1111) ? r15 : rf[ra2];
@@ -533,7 +533,7 @@ module ahb_lite(input  logic        HCLK,
   ahb_mux     mux(HSEL, HRDATA0, HRDATA1, HRDATA2, HRDATA3, HRDATA);
   
   // Memory and peripherals
-  ahb_rom     rom  (HCLK, HSEL[0], HADDRDEL[7:0], HRDATA0);
+  ahb_rom     rom  (HCLK, HSEL[0], HADDRDEL[31:0], HRDATA0);
   ahb_ram     ram  (HCLK, HSEL[1], HADDRDEL[7:0], HWRITE, HWDATA, HRDATA1);
   ahb_gpio    gpio (HCLK, HRESETn, HSEL[2], HADDRDEL[2], HWRITE, HWDATA, HRDATA2, pins);
   ahb_timer   timer(HCLK, HRESETn, HSEL[3], HADDRDEL[4:2], HWRITE, HWDATA, HRDATA3);
@@ -585,16 +585,22 @@ endmodule
 
 module ahb_rom(input  logic        HCLK,
                input  logic        HSEL,
-               input  logic [7:0] HADDR,
+               input  logic [31:0] HADDR,
                output logic [31:0] HRDATA);
 
   logic [31:0] rom[255:0]; // 64KB ROM organized as 16K x 32 bits 
   initial begin
-  rom[0]=32'h800;
+  //rom[0]=32'h800;
+  
+  rom[0]=32'h00000000;
+  rom[1]=32'h00000029;
+  rom[2]=32'h00000000;  
+  rom[3]=32'h00000800;
+ 
   end
   //    $readmemh("rom_contents.dat",rom);
   
-  assign HRDATA = rom[HADDR];
+  assign HRDATA = rom[{2'b0,HADDR[31:2]}];
 endmodule
 
 module ahb_gpio(input  logic        HCLK,

@@ -46,27 +46,37 @@ __Vectors		    	;DCD		0x000003FC							; 1K Internal Memory
 Reset_Handler   PROC
                 GLOBAL Reset_Handler
                 ENTRY
-				
+				b main
+        		b main
+				DCD		teste+4
+				DCD     0x800
+main				
+				subs r0,r7,r7
+				subs r1,r7,r7
+				;adds r0,#0
 
-main								
-				subs r0,r7,r7
-				subs r1,r7,r7
-				adds r0,#0
-				ldr r1,[r0,#0]
-				subs r1,r7,r7
-				adds r0,#0xFF
-				str r0,[r1,#0]
-				str r0,[r1,#0]
-				;beq main
-				;bx lr
-				subs r0,r7,r7
-				;ldr r1,[r0,teste]
+				ldr r3,[r0,#4]
+				ldr r3,[r0,#4]
+				blx r3
 				;adds r0, teste
-				 blx r0
-teste				
+				b main
+				nop
+				nop
+				nop
+				nop
+				nop
+				nop
+teste			
+				subs r0,r7,r7
+				ldr r1,[r0,#12]
+				ldr r1,[r0,#12]
+				subs r2,r7,r7
+				adds r2,#0xFF
+				str r2,[r1]
+				str r2,[r1]
+				bx lr
 				endp				
-        		DCD		main
-				DCD		teste
+
 
 		END                         
 
