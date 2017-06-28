@@ -48,13 +48,17 @@ Reset_Handler   PROC
                 ENTRY
 				b main
         		b main
-				DCD		teste+4
+				DCD		teste
 				DCD     0x800
 main				
 				subs r0,r7,r7
 				subs r1,r7,r7
-				;adds r0,#0
-
+				subs r3,r7,r7
+				subs r4,r7,r7
+				adds r3,#0x55
+				adds r4,#0xAA
+				orrs r3,r4
+                beq main
 				ldr r3,[r0,#4]
 				ldr r3,[r0,#4]
 				blx r3

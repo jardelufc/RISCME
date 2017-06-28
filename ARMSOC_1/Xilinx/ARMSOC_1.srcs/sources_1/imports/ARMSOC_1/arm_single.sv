@@ -172,14 +172,14 @@ module controller(input  logic         clk, reset,
                   output logic         weLR);
 
   logic [1:0] FlagW;
-  logic       PCS, RegW, MemW;
+  logic       PCS, RegW, MemW,isbcond;
   
   decode dec(Instr[15:6],
              FlagW, PCS, RegW, MemW,
-             MemtoReg, ALUSrc, ImmSrc, RegSrc, ALUControl,weLR);
+             MemtoReg, ALUSrc, ImmSrc, RegSrc, ALUControl,weLR, isbcond);
   condlogic cl(clk, reset, Instr[11:8], ALUFlags,
                FlagW, PCS, RegW, MemW,
-               PCSrc, RegWrite, MemWrite);
+               PCSrc, RegWrite, MemWrite,isbcond);
 endmodule
 
 module decode(
@@ -191,9 +191,10 @@ module decode(
               output logic [4:0] RegSrc,
               
               output logic [1:0] ALUControl,
-              output logic  weLR);
+              output logic  weLR,
+              output logic isbcond);
 
-  logic [16:0] controls;
+  logic [17:0] controls;
   
 
   // Main Decoder
@@ -201,35 +202,35 @@ module decode(
   always_comb
   // Data path register add sub
   if(instr[15:9]==7'b0001100 || instr[15:9]==7'b0001101) 
-        controls = {16'b0000XX10XX100110,instr[9]};
+        controls = {17'b00000XX10XX100110,instr[9]};
   // Data path register and or
   else if(instr[15:6]==10'b0100000000 || instr[15:6]==10'b0100001100)
-          controls = {16'b0000XX10XX000101,instr[9]};
+          controls = {17'b00000XX10XX000101,instr[9]};
   //DPimm
   else if(instr[15:11]==5'b00110 || instr[15:11]==5'b00111)
-        controls = {16'b000101110XX10110,instr[11]};
+        controls = {17'b0000101110XX10110,instr[11]};
   //STR
   else if(instr[15:11]==5'b01100)
-        controls = 17'b0X110000XX0X00000; //reg      
+        controls = 18'b00X110000XX0X00000; //reg      
   //LDR
   else if(instr[15:11]==5'b01101)
-        controls = 17'b01010010XXX000000; //reg      
+        controls = 18'b001010010XXX000000; //reg      
   //B cond
   else if(instr[15:12]==4'b1101) // ||  || instr[15:7]==9'b010001111 || )   
-        controls = 17'b1001100110XX00000; 
+        controls = 18'b11001100110XX00000; 
   // B 
   else if (instr[15:11]==5'b11100)
-         controls = 17'b1001110110XX00000;
+         controls = 18'b01001110110XX00000;
 
   // BX
   else if (instr[15:7]==9'b010001110)
-        controls = 17'b1000XX01110X00000;
+        controls = 18'b01000XX01110X00000;
   // BLX        
   else if (instr[15:7]==9'b010001111)
-              controls = 17'b1000XX01110X10000;        
+              controls = 18'b01000XX01110X10000;        
   // Default
   else
-      controls = 17'bx;
+      controls = 18'bx;
   
      
   /*	casex(Op)
@@ -247,7 +248,7 @@ module decode(
   	  default:              controls = 10'bx;          
   	endcase*/
 
-  assign {PCS,MemtoReg,MemW, ALUSrc, ImmSrc,RegW, RegSrc,weLR,FlagW,ALUControl} = controls[16:0]; 
+  assign {isbcond,PCS,MemtoReg,MemW, ALUSrc, ImmSrc,RegW, RegSrc,weLR,FlagW,ALUControl} = controls[17:0]; 
           
   // ALU Decoder  
   /*           
@@ -282,7 +283,8 @@ module condlogic(input  logic       clk, reset,
                  input  logic [3:0] ALUFlags,
                  input  logic [1:0] FlagW,
                  input  logic       PCS, RegW, MemW,
-                 output logic       PCSrc, RegWrite, MemWrite);
+                 output logic       PCSrc, RegWrite, MemWrite, 
+                 input logic isbcond);
                  
   logic [1:0] FlagWrite;
   logic [3:0] Flags;
@@ -294,7 +296,8 @@ module condlogic(input  logic       clk, reset,
                        ALUFlags[1:0], Flags[1:0]);
 
   // write controls are conditional
-  condcheck cc(Cond, Flags, CondEx);
+  condcheck cc(Cond, Flags, CondEx, isbcond);
+  
   assign FlagWrite = FlagW & {2{CondEx}};
   assign RegWrite  = RegW  & CondEx;
   assign MemWrite  = MemW  & CondEx;
@@ -303,34 +306,37 @@ endmodule
 
 module condcheck(input  logic [3:0] Cond,
                  input  logic [3:0] Flags,
-                 output logic       CondEx);
+                 output logic       CondEx,
+                 input logic isbcond);
   
-  logic neg, zero, carry, overflow, ge;
+  logic neg, zero, carry, overflow, ge, wCondEx;
   
   assign {neg, zero, carry, overflow} = Flags;
   assign ge = (neg == overflow);
-  assign CondEx = 1'b1;                
-/*
+  //assign CondEx = 1'b1;          
+  mux2 #(1)   condmux( 1'b1 ,wCondEx , isbcond, CondEx);
+      
+
   always_comb
 
     case(Cond)
-      4'b0000: CondEx = zero;             // EQ
-      4'b0001: CondEx = ~zero;            // NE
-      4'b0010: CondEx = carry;            // CS
-      4'b0011: CondEx = ~carry;           // CC
-      4'b0100: CondEx = neg;              // MI
-      4'b0101: CondEx = ~neg;             // PL
-      4'b0110: CondEx = overflow;         // VS
-      4'b0111: CondEx = ~overflow;        // VC
-      4'b1000: CondEx = carry & ~zero;    // HI
-      4'b1001: CondEx = ~(carry & ~zero); // LS
-      4'b1010: CondEx = ge;               // GE
-      4'b1011: CondEx = ~ge;              // LT
-      4'b1100: CondEx = ~zero & ge;       // GT
-      4'b1101: CondEx = ~(~zero & ge);    // LE
-      4'b1110: CondEx = 1'b1;             // Always
-      default: CondEx = 1'bx;             // undefined
-    endcase*/
+      4'b0000: wCondEx = zero;             // EQ
+      4'b0001: wCondEx = ~zero;            // NE
+      4'b0010: wCondEx = carry;            // CS
+      4'b0011: wCondEx = ~carry;           // CC
+      4'b0100: wCondEx = neg;              // MI
+      4'b0101: wCondEx = ~neg;             // PL
+      4'b0110: wCondEx = overflow;         // VS
+      4'b0111: wCondEx = ~overflow;        // VC
+      4'b1000: wCondEx = carry & ~zero;    // HI
+      4'b1001: wCondEx = ~(carry & ~zero); // LS
+      4'b1010: wCondEx = ge;               // GE
+      4'b1011: wCondEx = ~ge;              // LT
+      4'b1100: wCondEx = ~zero & ge;       // GT
+      4'b1101: wCondEx = ~(~zero & ge);    // LE
+      4'b1110: wCondEx = 1'b1;             // Always
+      default: wCondEx = 1'bx;             // undefined
+    endcase
 endmodule
 
 module datapath(input  logic        clk, reset,
@@ -371,7 +377,7 @@ module datapath(input  logic        clk, reset,
 // LDR immsrc 011
 // LDR alusrc 
 
-  regfile     rf(clk, RegWrite, RA1, RA2,RA3, Result, PCPlus4,SrcA, WriteData,weLR); 
+  regfile     rf(clk, RegWrite, RA1, RA2,RA3, Result, PCPlus4,SrcA, WriteData,weLR,PCPlus2); 
   mux2 #(32)  resmux(ALUResult, ReadData, MemtoReg, Result);
   extend      ext(Instr[10:0], ImmSrc, ExtImm);
 
@@ -385,7 +391,8 @@ module regfile(input  logic        clk,
                input  logic [3:0]  ra1, ra2, wa3, 
                input  logic [31:0] wd3, r15,
                output logic [31:0] rd1, rd2,
-               input  logic        weLR
+               input  logic        weLR,
+               input logic LR
 
                );
 
@@ -411,7 +418,7 @@ end
     if (we3) rf[wa3] <= wd3;	
 
   always_ff @(posedge clk)
-    if (weLR) rf[14] <= (r15-2);
+    if (weLR) rf[14] <= (r15-2); //LR
 
   assign rd1 = (ra1 == 4'b1111) ? r15 : rf[ra1];
   assign rd2 = (ra2 == 4'b1111) ? r15 : rf[ra2];
@@ -593,7 +600,7 @@ module ahb_rom(input  logic        HCLK,
   //rom[0]=32'h800;
   
   rom[0]=32'h00000000;
-  rom[1]=32'h00000029;
+  rom[1]=32'h00000031;
   rom[2]=32'h00000000;  
   rom[3]=32'h00000800;
  
