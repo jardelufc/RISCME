@@ -32,7 +32,9 @@ ROM[27]='h1BFA;
 ROM[28]='h32FF;
 ROM[29]='h600A;
 ROM[30]='h600A;
-ROM[31]='h4770;
+ROM[31]='h600A;
+ROM[32]='h4770;
+ROM[33]='h0000;
   end
   assign rd = ROM[a[31:1]];
 endmodule
