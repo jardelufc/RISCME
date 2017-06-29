@@ -43,7 +43,7 @@ __Vectors		    	;DCD		0x000003FC							; 1K Internal Memory
         				;DCD		0
                 AREA |.text|, CODE, READONLY
 ;Reset Handler
-delay equ 4
+teste equ 4
 gpio equ 8
 
 Reset_Handler   PROC
@@ -62,8 +62,8 @@ main
 				adds r4,#0xAA
 				orrs r3,r4
                 beq main
-				ldr r3,[r0,#delay]
-				ldr r3,[r0,#delay]
+				ldr r3,[r0,#teste]
+				ldr r3,[r0,#teste]
 				blx r3
 				;adds r0, teste
 				b main

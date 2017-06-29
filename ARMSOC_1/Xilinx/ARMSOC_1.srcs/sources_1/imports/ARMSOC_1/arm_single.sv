@@ -392,7 +392,7 @@ module regfile(input  logic        clk,
                input  logic [31:0] wd3, r15,
                output logic [31:0] rd1, rd2,
                input  logic        weLR,
-               input logic LR
+               input logic [31:0]LR
 
                );
 
@@ -415,10 +415,14 @@ end
   // register 15 reads PC+8 instead
 
   always_ff @(posedge clk)
+  begin
     if (we3) rf[wa3] <= wd3;	
+    else if (weLR) rf[14] <= LR; //(r15-2)
+  end
 
-  always_ff @(posedge clk)
-    if (weLR) rf[14] <= (r15-2); //LR
+
+//  always_ff @(posedge clk)
+//    if (weLR) rf[14] <= LR; //(r15-2)
 
   assign rd1 = (ra1 == 4'b1111) ? r15 : rf[ra1];
   assign rd2 = (ra2 == 4'b1111) ? r15 : rf[ra2];

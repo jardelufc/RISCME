@@ -380,9 +380,9 @@
           <GroupName>Source Group 1</GroupName>
           <Files>
             <File>
-              <FileName>cm0dsasm.s</FileName>
+              <FileName>blinkriscme.s</FileName>
               <FileType>2</FileType>
-              <FilePath>.\cm0dsasm.s</FilePath>
+              <FilePath>.\blinkriscme.s</FilePath>
             </File>
           </Files>
         </Group>
