@@ -1,7 +1,9 @@
 module imem(input  logic [31:0] a, output logic [15:0] rd);
   reg [15:0] ROM[255:0];
   initial begin
-ROM[0]='hE004;
+  //
+  
+     ROM[0]='hE004;
 ROM[1]='hE003;
 ROM[2]='h0031;
 ROM[3]='h0000;
@@ -26,8 +28,8 @@ ROM[21]='hBF00;
 ROM[22]='hBF00;
 ROM[23]='hBF00;
 ROM[24]='h1BF8;
-ROM[25]='h68C1;
-ROM[26]='h68C1;
+ROM[25]='h6881;
+ROM[26]='h6881;
 ROM[27]='h1BFA;
 ROM[28]='h32FF;
 ROM[29]='h600A;

@@ -44,15 +44,15 @@ __Vectors		    	;DCD		0x000003FC							; 1K Internal Memory
                 AREA |.text|, CODE, READONLY
 ;Reset Handler
 delay equ 4
-gpio equ 12
+gpio equ 8
 
 Reset_Handler   PROC
                 GLOBAL Reset_Handler
                 ENTRY
 				b main
         		b main
-				DCD		teste ; delay
-				DCD     0x800 ; gpio
+				DCD		teste ; delay equ 4
+				DCD     0x800 ; gpio  equ 8
 main				
 				subs r0,r7,r7
 				subs r1,r7,r7

@@ -27,14 +27,14 @@ void main(int argc, char**argv) {
 		return;
 	}
 
-	fprintf(fout, "module imem(input  logic [31:0] a, output logic [15:0] rd);\n");
-	fprintf(fout, "  reg [15:0] ROM[255:0];\n");
-	fprintf(fout, "  initial begin\n");
+	//fprintf(fout, "module imem(input  logic [31:0] a, output logic [15:0] rd);\n");
+	//fprintf(fout, "  reg [15:0] ROM[255:0];\n");
+	//fprintf(fout, "  initial begin\n");
 
 
 	i=atoi(argv[3]);
 
-	while((!feof(fin)) || (i>255) ) {
+	while((!feof(fin)) ) {
 		buf[0]=0;
 		p=fgets(buf, 19,fin);
 		n=strlen(buf);
@@ -54,9 +54,9 @@ void main(int argc, char**argv) {
 
 		i++;
 	}
-	fprintf(fout, "  end\n");
-	fprintf(fout, "  assign rd = ROM[a[31:1]];\n"); // word aligned
-	fprintf(fout, "endmodule");
+	//fprintf(fout, "  end\n");
+	//fprintf(fout, "  assign rd = ROM[a[31:1]];\n"); // word aligned
+	//fprintf(fout, "endmodule");
 	fclose(fin);
 	fclose(fout);
 }

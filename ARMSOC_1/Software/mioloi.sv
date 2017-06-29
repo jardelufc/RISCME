@@ -1,9 +1,4 @@
-module imem(input  logic [31:0] a, output logic [15:0] rd);
-  reg [15:0] ROM[255:0];
-  initial begin
-  //
-  
-     ROM[0]='hE004;
+ROM[0]='hE004;
 ROM[1]='hE003;
 ROM[2]='h0031;
 ROM[3]='h0000;
@@ -37,6 +32,3 @@ ROM[30]='h600A;
 ROM[31]='h600A;
 ROM[32]='h4770;
 ROM[33]='h0000;
-  end
-  assign rd = ROM[a[31:1]];
-endmodule

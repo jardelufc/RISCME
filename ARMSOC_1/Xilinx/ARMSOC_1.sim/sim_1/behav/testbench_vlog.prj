@@ -1,9 +1,10 @@
 # compile verilog/system verilog design source files
 verilog xil_defaultlib  "../../../ARMSOC_1.srcs/sources_1/ip/ClockDiv_2/ClockDiv_clk_wiz.v" --include "../../../ARMSOC_1.srcs/sources_1/ip/ClockDiv_2"
 verilog xil_defaultlib  "../../../ARMSOC_1.srcs/sources_1/ip/ClockDiv_2/ClockDiv.v" --include "../../../ARMSOC_1.srcs/sources_1/ip/ClockDiv_2"
-verilog xil_defaultlib  "../../../../AHBLITE_SYS.v" --include "../../../ARMSOC_1.srcs/sources_1/ip/ClockDiv_2"
-sv xil_defaultlib  "../../../../arm_single.sv" --include "../../../ARMSOC_1.srcs/sources_1/ip/ClockDiv_2"
-sv xil_defaultlib  "../../../../Software/imem.sv" --include "../../../ARMSOC_1.srcs/sources_1/ip/ClockDiv_2"
+verilog xil_defaultlib  "../../../ARMSOC_1.srcs/sources_1/imports/ARMSOC_1/AHBLITE_SYS.v" --include "../../../ARMSOC_1.srcs/sources_1/ip/ClockDiv_2"
+sv xil_defaultlib  "../../../ARMSOC_1.srcs/sources_1/imports/ARMSOC_1/arm_single.sv" --include "../../../ARMSOC_1.srcs/sources_1/ip/ClockDiv_2"
+sv xil_defaultlib  "../../../ARMSOC_1.srcs/sources_1/imports/ARMSOC_1/Software/imem.sv" --include "../../../ARMSOC_1.srcs/sources_1/ip/ClockDiv_2"
+sv xil_defaultlib  "../../../ARMSOC_1.srcs/sources_1/imports/Software/ahbrom.sv" --include "../../../ARMSOC_1.srcs/sources_1/ip/ClockDiv_2"
 
 # compile glbl module
 verilog xil_defaultlib "glbl.v"

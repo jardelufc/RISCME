@@ -589,7 +589,7 @@ module ahb_ram(input  logic        HCLK,
   always_ff @(posedge HCLK)
     if (HWRITE & HSEL) ram[HADDR] <= HWDATA;
 endmodule
-
+/*
 module ahb_rom(input  logic        HCLK,
                input  logic        HSEL,
                input  logic [31:0] HADDR,
@@ -609,7 +609,7 @@ module ahb_rom(input  logic        HCLK,
   
   assign HRDATA = rom[{2'b0,HADDR[31:2]}];
 endmodule
-
+*/
 module ahb_gpio(input  logic        HCLK,
                 input  logic        HRESETn,
                 input  logic        HSEL,
