@@ -13,7 +13,7 @@ Its an Very Simple Cortex M0 ARMV6-M architecture Single Cycle  (same architectu
 
 For more information about this micro architecture, please read ppt inside docs folder.
 
-An part of the System Verilog modules sources cames from the book Computer Design Arm Edition of Harris and Harris . Essentialy, its everything in https://github.com/jardelufc/ARM7XilinxBasys3DesignKit/blob/master/ARM7-DesignKit/EXAMPLE_SoC/ARMSOC_1/arm_single.sv .
+An part of the System Verilog modules sources cames from the book Computer Design Arm Edition of Harris and Harris . Essentialy, its everything in https://github.com/jardelufc/RISCME/blob/master/ARMSOC_1/Xilinx/ARMSOC_1.srcs/sources_1/imports/ARMSOC_1/arm_single.sv .
 
 Before starting, you are supposed to install, in Rwindow$ OS, the free version of  Vivado (webpack) , MDK Keil and Mdk Keil Support for CM0DSK .
 
