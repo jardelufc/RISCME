@@ -397,6 +397,8 @@ module regfile(input  logic        clk,
                );
 
   logic [31:0] rf[14:0];
+  logic [31:0] ird1, ird2;
+	
 initial begin
 rf[0]=32'h00000000;
 rf[1]=32'h00000000;
@@ -424,8 +426,11 @@ end
 //  always_ff @(posedge clk)
 //    if (weLR) rf[14] <= LR; //(r15-2)
 
-  assign rd1 = (ra1 == 4'b1111) ? r15 : rf[ra1];
-  assign rd2 = (ra2 == 4'b1111) ? r15 : rf[ra2];
+  assign ird1 = (ra1 == 4'b1111) ? r15 : rf[ra1];
+  assign ird2 = (ra2 == 4'b1111) ? r15 : rf[ra2];
+  assign rd1 = (ra1 == 4'b0000) ? 32'b0 : ird1; //r0 hardwired to 0
+  assign rd2 = (ra2 == 4'b0000) ? 32'b0 : ird2; //r0 hardwired to 0
+	
 endmodule
 
 module extend(input  logic [10:0] Instr,
