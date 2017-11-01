@@ -43,3 +43,18 @@ You can find a few more AHB Lite peripherals here: https://www.arm.com/files/zip
 
 Enjoy it :) 
 
+Práticas
+
+https://reference.digilentinc.com/doku.php?id=learn/programmable-logic/tutorials/basys-3-getting-started/start
+https://docs.google.com/document/d/12eqlU6wIwqsk7CH9N1W5ijxXllOanybj3HdJ11Hcmtg/edit
+https://docs.google.com/document/d/1abYfJVvwZPnJiuPWRFgOt4_ogOw70HXXVd_gNGWjYa8/edit
+https://docs.google.com/document/d/1X7mZkEgcMzj8dZqiO9CtmbHgn6oCfx5wQhOr3CPH_F4/edit
+https://docs.google.com/document/d/1s15IU3ZWP8kzKlILYaOYT9sD2dZqBlr8T0H99tihQ0U/edit
+https://docs.google.com/document/d/1MVQSHybyo5K-5p5HIinvbwWCNfkGoaUnnxmz4RJdxz4/edit
+
+
+
+
+
+
+
