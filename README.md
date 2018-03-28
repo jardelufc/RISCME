@@ -41,6 +41,8 @@ I've never tested the timers .
 
 You can find a few more AHB Lite peripherals here: https://www.arm.com/files/zip/CM0DS-DesignKit.zip
 
+A Verification system would be nice. Here are the models https://developer.arm.com/products/system-design/fast-models?utm_source=soc_news&utm_medium=email&utm_campaign=soc_news_2018_03%3E&mkt_tok=eyJpIjoiWXpJek1XUXdPVGN6TURJNCIsInQiOiJiYjQydkpCQjlFYVJpaU54S1lmSTZJSzd1VXNBdzUwaFZ0XC9qNlBaczhmUHkrblplR3ZFVnFCUmI2dGlrNytRakU4eUIzalwvMmpjZTBcL2V2S1BOWHphVkZyZU1kUVU3OHlObDNqc2V4VTdwT016MjBaek5cL3dLdnd1OSt4UDhqbmgifQ%3D%3D .
+
 Enjoy it :) 
 
 Práticas
