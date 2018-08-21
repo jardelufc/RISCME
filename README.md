@@ -60,6 +60,9 @@ Práticas
 6. https://docs.google.com/document/d/1MVQSHybyo5K-5p5HIinvbwWCNfkGoaUnnxmz4RJdxz4/edit
 
 
+Práticas de 2016: https://drive.google.com/drive/u/1/folders/0B_DkeSRVqT_7b25iUlNOLVdSbDQ
+
+
 
 
 
